@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modelo de Solow — Simulación</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1e2530;
+    --border: #2a3441;
+    --text: #e6edf3;
+    --text-muted: #7d8590;
+    --accent: #f0a500;
+    --accent2: #3fb950;
+    --accent3: #58a6ff;
+    --accent4: #db61a2;
+    --red: #f85149;
+    --gold: #f0a500;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  header {
+    padding: 28px 40px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.6rem;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  header h1 span { color: var(--gold); font-style: italic; }
+
+  header p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* Layout */
+  .main-wrap {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: calc(100vh - 73px);
+  }
+
+  /* Sidebar / Controls */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .param-block {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .param-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .param-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .param-name {
+    font-size: 0.82rem;
+    color: var(--text);
+  }
+
+  .param-eq {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .param-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--gold);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(240,165,0,0.4);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 14px rgba(240,165,0,0.6);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Scenario buttons */
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .scenario-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 0.72rem;
+    padding: 7px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .scenario-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(240,165,0,0.06);
+  }
+
+  /* Simulate btn */
+  .sim-btn {
+    width: 100%;
+    background: var(--gold);
+    color: #0d1117;
+    font-family: 'Instrument Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 11px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .sim-btn:hover {
+    background: #ffbe2e;
+    box-shadow: 0 0 20px rgba(240,165,0,0.3);
+  }
+
+  .sim-btn:active { transform: scale(0.98); }
+
+  /* k0 row */
+  .k0-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .k-marker {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  .k-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* Charts area */
+  .charts-area {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    height: calc(100vh - 73px);
+  }
+
+  .top-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    flex: 0 0 auto;
+  }
+
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    flex: 0 0 auto;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chart-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 0.95rem;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  .chart-subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* Each canvas lives inside a fixed-height wrapper so Chart.js never grows it */
+  .canvas-wrap {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    flex-shrink: 0;
+  }
+
+  .bottom-row .canvas-wrap {
+    height: 170px;
+  }
+
+  canvas {
+    display: block;
+  }
+
+  /* Equation display */
+  .eq-bar {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  .eq-bar .hl { color: var(--gold); }
+  .eq-bar .hl2 { color: var(--accent2); }
+  .eq-bar .hl3 { color: var(--accent3); }
+  .eq-bar .hl4 { color: var(--accent4); }
+
+  /* Legend */
+  .legend-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 0.72rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-muted);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .legend-line {
+    width: 16px; height: 2px;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  /* SS indicator */
+  .ss-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(63,185,80,0.12);
+    border: 1px solid rgba(63,185,80,0.3);
+    color: var(--accent2);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.06em;
+  }
+
+  /* Animated glowing dot for SS */
+  @keyframes pulse-green {
+    0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--accent2); }
+    50% { opacity: 0.5; box-shadow: 0 0 12px var(--accent2); }
+  }
+
+  .ss-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+    animation: pulse-green 1.8s infinite;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  /* Info chip */
+  .info-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+
+  .info-chip strong { color: var(--text); }
+
+  .info-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 1100px) {
+    .main-wrap { grid-template-columns: 240px 1fr; }
+    .top-row, .bottom-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Modelo de <span>Solow</span></h1>
+  <p>— Capital per cápita en unidades eficientes · Simulación interactiva</p>
+</header>
+
+<div class="main-wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div>
+      <div class="section-label">Parámetros del modelo</div>
+      <div class="param-block">
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">Tasa de ahorro</span>
+            <span class="param-val" id="val-s">0.30</span>
+          </div>
+          <span class="param-eq">s</span>
+          <input type="range" id="sl-s" min="0.05" max="0.60" step="0.01" value="0.30">
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">Depreciación del capital</span>
+            <span class="param-val" id="val-delta">0.05</span>
+          </div>
+          <span class="param-eq">δ</span>
+          <input type="range" id="sl-delta" min="0.01" max="0.20" step="0.005" value="0.05">
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">Crecimiento poblacional</span>
+            <span class="param-val" id="val-n">0.01</span>
+          </div>
+          <span class="param-eq">n</span>
+          <input type="range" id="sl-n" min="0.00" max="0.05" step="0.005" value="0.01">
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">Progreso tecnológico</span>
+            <span class="param-val" id="val-g">0.02</span>
+          </div>
+          <span class="param-eq">g</span>
+          <input type="range" id="sl-g" min="0.00" max="0.05" step="0.005" value="0.02">
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">Elasticidad del capital</span>
+            <span class="param-val" id="val-alpha">0.33</span>
+          </div>
+          <span class="param-eq">α (función Cobb-Douglas)</span>
+          <input type="range" id="sl-alpha" min="0.10" max="0.80" step="0.01" value="0.33">
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <div class="section-label">Capital inicial</div>
+      <div class="param-block">
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">k̃₀ — Capital inicial</span>
+            <span class="param-val" id="val-k0">1.0</span>
+          </div>
+          <input type="range" id="sl-k0" min="0.2" max="8.0" step="0.1" value="1.0">
+        </div>
+        <div class="k0-display" id="k0-display">
+          <!-- filled by JS -->
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <div class="section-label">Períodos a simular</div>
+      <div class="param-row">
+        <div class="param-header">
+          <span class="param-name">Horizontes</span>
+          <span class="param-val" id="val-T">80</span>
+        </div>
+        <input type="range" id="sl-T" min="20" max="200" step="5" value="80">
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <div class="section-label">Escenarios predefinidos</div>
+      <div class="scenario-grid">
+        <button class="scenario-btn" onclick="setScenario('base')">Base</button>
+        <button class="scenario-btn" onclick="setScenario('highsave')">↑ Ahorro</button>
+        <button class="scenario-btn" onclick="setScenario('lowdep')">↓ Depr.</button>
+        <button class="scenario-btn" onclick="setScenario('hightech')">↑ Tecnol.</button>
+        <button class="scenario-btn" onclick="setScenario('highpop')">↑ Pob.</button>
+        <button class="scenario-btn" onclick="setScenario('above')">k̃₀ > k̃*</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <button class="sim-btn" onclick="runAll()">▶ Simular</button>
+
+    <div class="info-chips" id="ss-chips">
+      <!-- filled by JS -->
+    </div>
+
+  </aside>
+
+  <!-- CHARTS -->
+  <main class="charts-area">
+
+    <!-- Equations bar -->
+    <div class="eq-bar" id="eq-bar">
+      <!-- filled by JS -->
+    </div>
+
+    <!-- Row 1: Bernoulli + k temporal -->
+    <div class="top-row">
+
+      <div class="chart-card">
+        <div class="chart-title">Diagrama de Solow</div>
+        <div class="chart-subtitle">Ecuación de Bernoulli · k̃ en estado estacionario</div>
+        <div class="legend-row">
+          <span class="legend-item"><span class="legend-dot" style="background:#f0a500"></span>s·f(k̃) — ahorro</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#db61a2"></span>(δ+n+g)·k̃ — costo</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#3fb950; border-radius:50%"></span>k̃*</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#58a6ff; border-radius:50%"></span>k̃₀</span>
+        </div>
+        <div class="ss-badge" id="ss-badge1"><span class="ss-dot"></span><span id="ss-val1">k̃*=–</span></div>
+        <div class="canvas-wrap"><canvas id="chart-bernoulli"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Dinámica de k̃(t)</div>
+        <div class="chart-subtitle">Trayectoria temporal del capital por unidad eficiente</div>
+        <div class="legend-row">
+          <span class="legend-item"><span class="legend-line" style="background:#58a6ff"></span>k̃(t)</span>
+          <span class="legend-item"><span class="legend-line" style="background:#3fb950; border:1px dashed #3fb950; height:0px; width:16px"></span>k̃*</span>
+        </div>
+        <div class="canvas-wrap"><canvas id="chart-k"></canvas></div>
+      </div>
+
+    </div>
+
+    <!-- Row 2: growth rate k + Δk-->
+    <div class="bottom-row">
+
+      <div class="chart-card">
+        <div class="chart-title">Tasa de crecimiento de k̃</div>
+        <div class="chart-subtitle">γ<sub>k̃</sub>(t) = dk̃/dt ÷ k̃ — convergencia condicional</div>
+        <div class="legend-row">
+          <span class="legend-item"><span class="legend-dot" style="background:#f85149"></span>γ<sub>k̃</sub>(t)</span>
+        </div>
+        <div class="canvas-wrap"><canvas id="chart-gk"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Variación absoluta Δk̃(t)</div>
+        <div class="chart-subtitle">dk̃/dt = s·f(k̃) − (δ+n+g)·k̃ en cada período</div>
+        <div class="legend-row">
+          <span class="legend-item"><span class="legend-dot" style="background:#db61a2"></span>Δk̃(t)</span>
+          <span class="legend-item"><span class="legend-line" style="background:#444; height:1px"></span>cero</span>
+        </div>
+        <div class="canvas-wrap"><canvas id="chart-dk"></canvas></div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ── State ──────────────────────────────────────────────────
+let params = { s:0.30, delta:0.05, n:0.01, g:0.02, alpha:0.33, k0:1.0, T:80 };
+
+// ── Helpers ────────────────────────────────────────────────
+const getP = () => ({...params});
+
+function solveKstar(p) {
+  // k* = (s / (delta+n+g))^(1/(1-alpha))
+  return Math.pow(p.s / (p.delta + p.n + p.g), 1/(1-p.alpha));
+}
+
+function simulate(p) {
+  const { s, delta, n, g, alpha, k0, T } = p;
+  const mu = delta + n + g;
+  const dt = 1;
+  let k = k0;
+  const ks = [k];
+  for (let t = 0; t < T; t++) {
+    const dk = s * Math.pow(k, alpha) - mu * k;
+    k = Math.max(k + dk * dt, 0.001);
+    ks.push(k);
+  }
+  return ks;
+}
+
+function growthRates(ks) {
+  const gk = [];
+  for (let t = 1; t < ks.length; t++) {
+    gk.push((ks[t] - ks[t-1]) / ks[t-1]);
+  }
+  return gk;
+}
+
+function deltaK(ks) {
+  const dk = [];
+  for (let t = 1; t < ks.length; t++) {
+    dk.push(ks[t] - ks[t-1]);
+  }
+  return dk;
+}
+
+// ── Chart refs ─────────────────────────────────────────────
+let charts = {};
+
+function makeChart(id, cfg) {
+  const ctx = document.getElementById(id).getContext('2d');
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, cfg);
+  return charts[id];
+}
+
+const GRID = 'rgba(255,255,255,0.05)';
+const TICK = '#7d8590';
+
+function baseScales(xLabel, yLabel) {
+  return {
+    x: {
+      grid: { color: GRID },
+      ticks: { color: TICK, font: { family: 'DM Mono', size: 10 } },
+      title: { display: true, text: xLabel, color: TICK, font: { family: 'DM Mono', size: 10 } }
+    },
+    y: {
+      grid: { color: GRID },
+      ticks: { color: TICK, font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 6 },
+      title: { display: true, text: yLabel, color: TICK, font: { family: 'DM Mono', size: 10 } }
+    }
+  };
+}
+
+const baseOpts = {
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: { duration: 250 },
+  plugins: { legend: { display: false } }
+};
+
+// ── Chart 1: Bernoulli / Solow diagram ────────────────────
+function drawBernoulli(p) {
+  const kstar = solveKstar(p);
+  const mu = p.delta + p.n + p.g;
+  const kmax = Math.max(kstar * 2.2, p.k0 * 1.5, 1.5);
+  const N = 120;
+  const ks = Array.from({length: N+1}, (_,i) => (i/N)*kmax);
+
+  const sf = ks.map(k => p.s * Math.pow(k, p.alpha));
+  const brake = ks.map(k => mu * k);
+
+  // find where sf > brake → arrow direction
+  const kLabels = ks.map(k => k.toFixed(2));
+
+  makeChart('chart-bernoulli', {
+    type: 'line',
+    data: {
+      labels: kLabels,
+      datasets: [
+        {
+          label: 's·f(k̃)',
+          data: sf,
+          borderColor: '#f0a500',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.3,
+          fill: false
+        },
+        {
+          label: '(δ+n+g)·k̃',
+          data: brake,
+          borderColor: '#db61a2',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      ...baseOpts,
+      plugins: {
+        ...baseOpts.plugins,
+        annotation: undefined,
+        tooltip: {
+          callbacks: {
+            title: ctx => `k̃ = ${parseFloat(ctx[0].label).toFixed(2)}`,
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(3)}`
+          }
+        }
+      },
+      scales: {
+        ...baseScales('k̃', 'Inversión / costo'),
+        x: {
+          ...baseScales('k̃','').x,
+          ticks: {
+            color: TICK,
+            font: { family: 'DM Mono', size: 9 },
+            maxTicksLimit: 8,
+            callback: (val, idx) => ks[idx] ? ks[idx].toFixed(1) : ''
+          }
+        }
+      }
+    },
+    plugins: [{
+      id: 'solow-annotations',
+      afterDraw(chart) {
+        const {ctx, scales: {x, y}} = chart;
+
+        // k* vertical dashed line
+        const kIdx = Math.round((kstar/kmax) * N);
+        const kx = x.getPixelForValue(kIdx);
+
+        ctx.save();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(63,185,80,0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(kx, y.top);
+        ctx.lineTo(kx, y.bottom);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // k* dot at intersection
+        const yval = mu * kstar;
+        const ky = y.getPixelForValue(yval);
+        ctx.beginPath();
+        ctx.arc(kx, ky, 5, 0, Math.PI*2);
+        ctx.fillStyle = '#3fb950';
+        ctx.fill();
+        ctx.fillStyle = '#3fb950';
+        ctx.font = 'bold 10px DM Mono';
+        ctx.fillText('k̃*', kx + 6, ky - 4);
+
+        // k0 dot on x-axis
+        const k0Idx = Math.round((p.k0/kmax) * N);
+        const k0x = x.getPixelForValue(k0Idx);
+        const yBot = y.getPixelForValue(0);
+        ctx.beginPath();
+        ctx.arc(k0x, yBot, 5, 0, Math.PI*2);
+        ctx.fillStyle = '#58a6ff';
+        ctx.fill();
+        ctx.fillStyle = '#58a6ff';
+        ctx.font = 'bold 10px DM Mono';
+        ctx.fillText('k̃₀', k0x + 6, yBot - 4);
+
+        // Arrow direction
+        const dir = p.k0 < kstar ? 1 : -1;
+        const arrowX = k0x + dir * 30;
+        ctx.beginPath();
+        ctx.moveTo(k0x + dir*8, yBot - 20);
+        ctx.lineTo(arrowX, yBot - 20);
+        ctx.strokeStyle = '#58a6ff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // arrowhead
+        ctx.beginPath();
+        ctx.moveTo(arrowX, yBot - 20);
+        ctx.lineTo(arrowX - dir*6, yBot - 25);
+        ctx.lineTo(arrowX - dir*6, yBot - 15);
+        ctx.closePath();
+        ctx.fillStyle = '#58a6ff';
+        ctx.fill();
+
+        ctx.restore();
+      }
+    }]
+  });
+
+  // Update badge
+  document.getElementById('ss-val1').textContent = `k̃* = ${kstar.toFixed(3)}`;
+}
+
+// ── Chart 2: k(t) temporal ────────────────────────────────
+function drawKt(ks, p) {
+  const kstar = solveKstar(p);
+  const T = ks.length;
+  const labels = Array.from({length: T}, (_,i) => i);
+
+  makeChart('chart-k', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'k̃(t)',
+          data: ks,
+          borderColor: '#58a6ff',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.2,
+          fill: {target: 'origin', above: 'rgba(88,166,255,0.05)'}
+        },
+        {
+          label: 'k̃*',
+          data: Array(T).fill(kstar),
+          borderColor: 'rgba(63,185,80,0.5)',
+          borderWidth: 1.5,
+          borderDash: [6,4],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      ...baseOpts,
+      scales: baseScales('t (período)', 'k̃(t)')
+    }
+  });
+}
+
+// ── Chart 3: Growth rate of k ──────────────────────────────
+function drawGk(ks, p) {
+  const gk = growthRates(ks);
+  const labels = Array.from({length: gk.length}, (_,i) => i+1);
+
+  makeChart('chart-gk', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'γ_k̃(t)',
+        data: gk,
+        borderColor: '#f85149',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: {target: {value: 0}, above: 'rgba(248,81,73,0.08)', below: 'rgba(248,81,73,0.04)'}
+      }]
+    },
+    options: {
+      ...baseOpts,
+      scales: {
+        ...baseScales('t (período)', 'γ_k̃ (fracción)'),
+        y: {
+          ...baseScales('','').y,
+          ticks: {
+            color: TICK,
+            font: { family: 'DM Mono', size: 10 },
+            maxTicksLimit: 6,
+            callback: v => (v*100).toFixed(1)+'%'
+          },
+          title: { display: true, text: 'tasa de crecimiento', color: TICK, font: {family:'DM Mono',size:10} }
+        }
+      }
+    },
+    plugins: [{
+      id: 'zeroline-gk',
+      afterDraw(chart) {
+        const {ctx, scales:{x,y}} = chart;
+        const y0 = y.getPixelForValue(0);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4,4]);
+        ctx.beginPath();
+        ctx.moveTo(x.left, y0);
+        ctx.lineTo(x.right, y0);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+// ── Chart 4: Δk(t) absolute ───────────────────────────────
+function drawDk(ks, p) {
+  const dk = deltaK(ks);
+  const labels = Array.from({length: dk.length}, (_,i) => i+1);
+
+  makeChart('chart-dk', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Δk̃(t)',
+        data: dk,
+        borderColor: '#db61a2',
+        borderWidth: 2,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: {target: {value:0}, above:'rgba(219,97,162,0.10)', below:'rgba(219,97,162,0.05)'}
+      }]
+    },
+    options: {
+      ...baseOpts,
+      scales: baseScales('t (período)', 'Δk̃ = s·f(k̃) − (δ+n+g)·k̃')
+    },
+    plugins: [{
+      id: 'zeroline-dk',
+      afterDraw(chart) {
+        const {ctx, scales:{x,y}} = chart;
+        const y0 = y.getPixelForValue(0);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4,4]);
+        ctx.beginPath();
+        ctx.moveTo(x.left, y0);
+        ctx.lineTo(x.right, y0);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+// ── Equation bar ──────────────────────────────────────────
+function updateEqBar(p) {
+  const kstar = solveKstar(p).toFixed(3);
+  const mu = (p.delta + p.n + p.g).toFixed(3);
+  document.getElementById('eq-bar').innerHTML = `
+    <span class="hl">dk̃/dt</span> = 
+    <span class="hl">s · k̃<sup>α</sup></span> − 
+    <span class="hl4">(δ+n+g) · k̃</span> &nbsp;|&nbsp;
+    s=<span class="hl">${p.s}</span>, 
+    α=<span class="hl">${p.alpha}</span>, 
+    δ+n+g=<span class="hl4">${mu}</span> &nbsp;|&nbsp;
+    k̃* = [<span class="hl">s</span> / <span class="hl4">(δ+n+g)</span>]<sup>1/(1−α)</sup> = 
+    <span class="hl2">${kstar}</span>
+  `;
+}
+
+// ── SS chips ──────────────────────────────────────────────
+function updateChips(p, ks) {
+  const kstar = solveKstar(p);
+  const ystar = Math.pow(kstar, p.alpha);
+  const cstar = (1-p.s)*ystar;
+  const kgold = Math.pow((p.s / (p.delta+p.n+p.g)) * p.alpha, 1/(1-p.alpha)); // not quite but illustrative
+  const finalK = ks[ks.length-1];
+  const pctConverged = Math.abs(finalK - kstar) / kstar * 100;
+
+  document.getElementById('ss-chips').innerHTML = `
+    <div class="info-chip">k̃* <strong>${kstar.toFixed(3)}</strong></div>
+    <div class="info-chip">ỹ* <strong>${ystar.toFixed(3)}</strong></div>
+    <div class="info-chip">c̃* <strong>${cstar.toFixed(3)}</strong></div>
+    <div class="info-chip">Δ k̃ final <strong>${pctConverged < 1 ? '<1%' : pctConverged.toFixed(1)+'%'}</strong></div>
+  `;
+}
+
+// ── k0 display ────────────────────────────────────────────
+function updateK0Display(p) {
+  const kstar = solveKstar(p);
+  const rel = p.k0 < kstar ? 'k̃₀ < k̃*' : p.k0 > kstar ? 'k̃₀ > k̃*' : 'k̃₀ = k̃*';
+  const col = p.k0 < kstar ? '#58a6ff' : p.k0 > kstar ? '#f85149' : '#3fb950';
+  document.getElementById('k0-display').innerHTML = `
+    <span class="k-marker">
+      <span class="k-dot" style="background:${col}"></span>
+      ${rel}
+    </span>
+  `;
+}
+
+// ── Main run ──────────────────────────────────────────────
+function runAll() {
+  const p = getP();
+  const ks = simulate(p);
+  drawBernoulli(p);
+  drawKt(ks, p);
+  drawGk(ks, p);
+  drawDk(ks, p);
+  updateEqBar(p);
+  updateChips(p, ks);
+  updateK0Display(p);
+}
+
+// ── Slider wiring ─────────────────────────────────────────
+function wireSlider(id, key, display) {
+  const el = document.getElementById(id);
+  const disp = document.getElementById(display);
+  el.addEventListener('input', () => {
+    params[key] = parseFloat(el.value);
+    disp.textContent = parseFloat(el.value).toFixed(key === 'T' ? 0 : (key === 'k0' ? 1 : 3));
+    runAll();
+  });
+}
+
+wireSlider('sl-s',     's',     'val-s');
+wireSlider('sl-delta', 'delta', 'val-delta');
+wireSlider('sl-n',     'n',     'val-n');
+wireSlider('sl-g',     'g',     'val-g');
+wireSlider('sl-alpha', 'alpha', 'val-alpha');
+wireSlider('sl-k0',    'k0',    'val-k0');
+wireSlider('sl-T',     'T',     'val-T');
+
+// ── Scenarios ─────────────────────────────────────────────
+const SCENARIOS = {
+  base:     { s:0.30, delta:0.05, n:0.01, g:0.02, alpha:0.33, k0:1.0, T:80 },
+  highsave: { s:0.45, delta:0.05, n:0.01, g:0.02, alpha:0.33, k0:1.0, T:80 },
+  lowdep:   { s:0.30, delta:0.02, n:0.01, g:0.02, alpha:0.33, k0:1.0, T:80 },
+  hightech: { s:0.30, delta:0.05, n:0.01, g:0.04, alpha:0.33, k0:1.0, T:100 },
+  highpop:  { s:0.30, delta:0.05, n:0.03, g:0.02, alpha:0.33, k0:1.0, T:80 },
+  above:    { s:0.30, delta:0.05, n:0.01, g:0.02, alpha:0.33, k0:7.0, T:80 }
+};
+
+function setScenario(name) {
+  const sc = SCENARIOS[name];
+  params = {...sc};
+  // Update sliders
+  document.getElementById('sl-s').value = sc.s;
+  document.getElementById('sl-delta').value = sc.delta;
+  document.getElementById('sl-n').value = sc.n;
+  document.getElementById('sl-g').value = sc.g;
+  document.getElementById('sl-alpha').value = sc.alpha;
+  document.getElementById('sl-k0').value = sc.k0;
+  document.getElementById('sl-T').value = sc.T;
+  // Update displays
+  document.getElementById('val-s').textContent = sc.s.toFixed(3);
+  document.getElementById('val-delta').textContent = sc.delta.toFixed(3);
+  document.getElementById('val-n').textContent = sc.n.toFixed(3);
+  document.getElementById('val-g').textContent = sc.g.toFixed(3);
+  document.getElementById('val-alpha').textContent = sc.alpha.toFixed(3);
+  document.getElementById('val-k0').textContent = sc.k0.toFixed(1);
+  document.getElementById('val-T').textContent = sc.T;
+  runAll();
+}
+
+// ── Init ──────────────────────────────────────────────────
+runAll();
+</script>
+</body>
+</html>
