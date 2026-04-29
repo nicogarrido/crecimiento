@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solow — Niveles de Capital</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1e2530;
+    --border: #2a3441;
+    --text: #e6edf3;
+    --text-muted: #7d8590;
+    --gold: #f0a500;
+    --green: #3fb950;
+    --blue: #58a6ff;
+    --pink: #db61a2;
+    --red: #f85149;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: 42px;
+    flex-shrink: 0;
+  }
+
+  .nav-back {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 0 16px 0 0;
+    border-right: 1px solid var(--border);
+    margin-right: 16px;
+    letter-spacing: 0.04em;
+    transition: color 0.15s;
+  }
+  .nav-back:hover { color: var(--gold); }
+
+  .nav-links { display: flex; gap: 4px; }
+  .nav-link {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: all 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .nav-link:hover { color: var(--text); background: var(--border); }
+  .nav-link.active { color: var(--gold); background: rgba(240,165,0,0.08); }
+
+  /* HEADER */
+  header {
+    padding: 16px 32px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+  }
+  header h1 span { color: var(--gold); font-style: italic; }
+  header p {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* MAIN LAYOUT */
+  .main-wrap {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 18px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .param-block { display: flex; flex-direction: column; gap: 13px; }
+
+  .param-row { display: flex; flex-direction: column; gap: 4px; }
+
+  .param-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .param-name { font-size: 0.8rem; color: var(--text); }
+  .param-eq { font-family: 'DM Mono', monospace; font-size: 0.67rem; color: var(--text-muted); }
+  .param-val { font-family: 'DM Mono', monospace; font-size: 0.82rem; color: var(--gold); font-weight: 500; }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 13px; height: 13px;
+    background: var(--gold);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(240,165,0,0.35);
+    transition: transform 0.1s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  .divider { height: 1px; background: var(--border); }
+
+  /* Explanation box */
+  .explain-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .explain-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+
+  .explain-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+
+  .explain-row strong { color: var(--text); display: block; font-size: 0.78rem; }
+
+  /* Chips */
+  .chips { display: flex; flex-direction: column; gap: 5px; }
+
+  .chip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 5px;
+  }
+  .chip-key { color: var(--text-muted); }
+  .chip-val { color: var(--text); font-weight: 500; }
+
+  .sim-btn {
+    width: 100%;
+    background: var(--gold);
+    color: #0d1117;
+    font-family: 'Instrument Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.83rem;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sim-btn:hover { background: #ffbe2e; box-shadow: 0 0 16px rgba(240,165,0,0.25); }
+  .sim-btn:active { transform: scale(0.98); }
+
+  /* CHARTS */
+  .charts-area {
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+  }
+
+  /* Eq bar */
+  .eq-bar {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+    flex-shrink: 0;
+  }
+  .eq-bar .g { color: var(--gold); }
+  .eq-bar .gr { color: var(--green); }
+  .eq-bar .b { color: var(--blue); }
+  .eq-bar .p { color: var(--pink); }
+
+  .charts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .chart-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 0.95rem;
+    letter-spacing: -0.01em;
+  }
+
+  .chart-subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-top: 2px;
+  }
+
+  .growth-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 3px 9px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .legend-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 0.68rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-muted);
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .legend-line { width: 16px; height: 2px; display: inline-block; }
+
+  .canvas-wrap {
+    position: relative;
+    width: 100%;
+    height: 160px;
+    flex-shrink: 0;
+  }
+
+  canvas { display: block; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-back" href="index.html">← Inicio</a>
+  <div class="nav-links">
+    <a class="nav-link" href="solow_model.html">Simulación Solow</a>
+    <a class="nav-link active" href="niveles.html">Niveles de Capital</a>
+  </div>
+</nav>
+
+<header>
+  <h1>Niveles de <span>Capital</span></h1>
+  <p>— De unidades eficientes a capital agregado · Solow</p>
+</header>
+
+<div class="main-wrap">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div>
+      <div class="section-label">Parámetros</div>
+      <div class="param-block">
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">Tasa de ahorro</span>
+            <span class="param-val" id="val-s">0.30</span>
+          </div>
+          <span class="param-eq">s</span>
+          <input type="range" id="sl-s" min="0.05" max="0.60" step="0.01" value="0.30">
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">Depreciación</span>
+            <span class="param-val" id="val-delta">0.05</span>
+          </div>
+          <span class="param-eq">δ</span>
+          <input type="range" id="sl-delta" min="0.01" max="0.20" step="0.005" value="0.05">
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">Crecimiento poblacional</span>
+            <span class="param-val" id="val-n">0.01</span>
+          </div>
+          <span class="param-eq">n</span>
+          <input type="range" id="sl-n" min="0.00" max="0.05" step="0.005" value="0.01">
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">Progreso tecnológico</span>
+            <span class="param-val" id="val-g">0.02</span>
+          </div>
+          <span class="param-eq">g</span>
+          <input type="range" id="sl-g" min="0.00" max="0.05" step="0.005" value="0.02">
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">Elasticidad del capital</span>
+            <span class="param-val" id="val-alpha">0.33</span>
+          </div>
+          <span class="param-eq">α</span>
+          <input type="range" id="sl-alpha" min="0.10" max="0.80" step="0.01" value="0.33">
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">Capital inicial k̃₀</span>
+            <span class="param-val" id="val-k0">1.0</span>
+          </div>
+          <input type="range" id="sl-k0" min="0.2" max="8.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="param-row">
+          <div class="param-header">
+            <span class="param-name">Períodos</span>
+            <span class="param-val" id="val-T">80</span>
+          </div>
+          <input type="range" id="sl-T" min="20" max="200" step="5" value="80">
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Conceptual explanation -->
+    <div>
+      <div class="section-label">¿Qué mide cada variable?</div>
+      <div class="explain-box">
+        <div class="explain-row">
+          <span class="explain-dot" style="background:var(--gold)"></span>
+          <div>
+            <strong>k̃(t) — Capital ef.</strong>
+            Capital por trabajador en unidades de eficiencia. Converge a k̃*. Es la variable que el modelo de Solow estabiliza.
+          </div>
+        </div>
+        <div class="explain-row">
+          <span class="explain-dot" style="background:var(--blue)"></span>
+          <div>
+            <strong>k(t) — Capital per cápita</strong>
+            k(t) = k̃(t)·A(t). Crece a tasa g en el largo plazo porque la tecnología sigue avanzando.
+          </div>
+        </div>
+        <div class="explain-row">
+          <span class="explain-dot" style="background:var(--pink)"></span>
+          <div>
+            <strong>K(t) — Capital agregado</strong>
+            K(t) = k(t)·L(t). Crece a tasa n+g en el largo plazo. Es el stock total de la economía.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <div class="section-label">Estado estacionario</div>
+      <div class="chips" id="ss-chips"></div>
+    </div>
+
+    <button class="sim-btn" onclick="runAll()">▶ Simular</button>
+
+  </aside>
+
+  <!-- CHARTS -->
+  <main class="charts-area">
+
+    <div class="eq-bar" id="eq-bar"></div>
+
+    <div class="charts-grid">
+
+      <!-- k-tilde -->
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="chart-title" style="color:var(--gold)">k̃(t) — Capital por unidad eficiente</div>
+            <div class="chart-subtitle">Converge a k̃* · Variable estacionaria del modelo</div>
+          </div>
+          <span class="growth-badge" id="badge-ktilde" style="background:rgba(240,165,0,0.1);border:1px solid rgba(240,165,0,0.3);color:var(--gold)">g_LR = 0%</span>
+        </div>
+        <div class="legend-row">
+          <span class="legend-item"><span class="legend-line" style="background:var(--gold)"></span>k̃(t)</span>
+          <span class="legend-item"><span class="legend-line" style="background:rgba(240,165,0,0.4);border-top:1px dashed rgba(240,165,0,0.4)"></span>k̃*</span>
+        </div>
+        <div class="canvas-wrap"><canvas id="chart-ktilde"></canvas></div>
+      </div>
+
+      <!-- k per capita -->
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="chart-title" style="color:var(--blue)">k(t) — Capital per cápita</div>
+            <div class="chart-subtitle">k(t) = k̃(t) · A(t) · Crece a tasa g en el largo plazo</div>
+          </div>
+          <span class="growth-badge" id="badge-k" style="background:rgba(88,166,255,0.1);border:1px solid rgba(88,166,255,0.3);color:var(--blue)">g_LR = g</span>
+        </div>
+        <div class="legend-row">
+          <span class="legend-item"><span class="legend-line" style="background:var(--blue)"></span>k(t)</span>
+          <span class="legend-item"><span class="legend-line" style="background:rgba(88,166,255,0.3);border-top:1px dashed rgba(88,166,255,0.4)"></span>tendencia BGP</span>
+        </div>
+        <div class="canvas-wrap"><canvas id="chart-k"></canvas></div>
+      </div>
+
+      <!-- K aggregate -->
+      <div class="chart-card">
+        <div class="card-header">
+          <div>
+            <div class="chart-title" style="color:var(--pink)">K(t) — Capital agregado</div>
+            <div class="chart-subtitle">K(t) = k(t) · L(t) · Crece a tasa n+g en el largo plazo</div>
+          </div>
+          <span class="growth-badge" id="badge-K" style="background:rgba(219,97,162,0.1);border:1px solid rgba(219,97,162,0.3);color:var(--pink)">g_LR = n+g</span>
+        </div>
+        <div class="legend-row">
+          <span class="legend-item"><span class="legend-line" style="background:var(--pink)"></span>K(t)</span>
+          <span class="legend-item"><span class="legend-line" style="background:rgba(219,97,162,0.3);border-top:1px dashed rgba(219,97,162,0.4)"></span>tendencia BGP</span>
+        </div>
+        <div class="canvas-wrap"><canvas id="chart-K"></canvas></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ── Parameters ─────────────────────────────────────────────
+let params = { s:0.30, delta:0.05, n:0.01, g:0.02, alpha:0.33, k0:1.0, T:80 };
+
+// ── Model ──────────────────────────────────────────────────
+function solveKstar(p) {
+  return Math.pow(p.s / (p.delta + p.n + p.g), 1/(1-p.alpha));
+}
+
+function simulate(p) {
+  const { s, delta, n, g, alpha, k0, T } = p;
+  const mu = delta + n + g;
+  // k-tilde simulation
+  const ktilde = [k0];
+  for (let t = 0; t < T; t++) {
+    const k = ktilde[t];
+    const dk = s * Math.pow(k, alpha) - mu * k;
+    ktilde.push(Math.max(k + dk, 0.001));
+  }
+
+  // A(t): technology level starting at 1
+  const A0 = 1.0;
+  const L0 = 1.0;
+
+  // k(t) = ktilde(t) * A(t)
+  const kpc = ktilde.map((k, t) => k * A0 * Math.exp(g * t));
+
+  // K(t) = k(t) * L(t)
+  const Kagg = kpc.map((k, t) => k * L0 * Math.exp(p.n * t));
+
+  return { ktilde, kpc, Kagg };
+}
+
+// BGP trend line: starting from the steady-state value
+function bgpTrend(kstar, rate, T, A0=1, L0=1, type='kpc') {
+  // Value at t=0 on BGP
+  const base = type === 'kpc' ? kstar * A0 : kstar * A0 * L0;
+  return Array.from({length: T+1}, (_, t) => base * Math.exp(rate * t));
+}
+
+// ── Charts ─────────────────────────────────────────────────
+let charts = {};
+
+function makeChart(id, cfg) {
+  const ctx = document.getElementById(id).getContext('2d');
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, cfg);
+}
+
+const GRID = 'rgba(255,255,255,0.05)';
+const TICK = '#7d8590';
+
+function baseScales(xLabel, yLabel) {
+  return {
+    x: {
+      grid: { color: GRID },
+      ticks: { color: TICK, font: { family: 'DM Mono', size: 9 }, maxTicksLimit: 8 },
+      title: { display: true, text: xLabel, color: TICK, font: { family: 'DM Mono', size: 9 } }
+    },
+    y: {
+      grid: { color: GRID },
+      ticks: { color: TICK, font: { family: 'DM Mono', size: 9 }, maxTicksLimit: 5 },
+      title: { display: true, text: yLabel, color: TICK, font: { family: 'DM Mono', size: 9 } }
+    }
+  };
+}
+
+const baseOpts = {
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: { duration: 250 },
+  plugins: { legend: { display: false } }
+};
+
+function drawKtilde(ktilde, kstar, T) {
+  const labels = Array.from({length: T+1}, (_, i) => i);
+  makeChart('chart-ktilde', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          data: ktilde,
+          borderColor: '#f0a500',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.2,
+          fill: false
+        },
+        {
+          data: Array(T+1).fill(kstar),
+          borderColor: 'rgba(240,165,0,0.4)',
+          borderWidth: 1.5,
+          borderDash: [6,4],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: { ...baseOpts, scales: baseScales('t (período)', 'k̃(t)') }
+  });
+}
+
+function drawKpc(kpc, kstar, g, T) {
+  const labels = Array.from({length: T+1}, (_, i) => i);
+  const trend = bgpTrend(kstar, g, T, 1, 1, 'kpc');
+  makeChart('chart-k', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          data: kpc,
+          borderColor: '#58a6ff',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.2,
+          fill: false
+        },
+        {
+          data: trend,
+          borderColor: 'rgba(88,166,255,0.35)',
+          borderWidth: 1.5,
+          borderDash: [6,4],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: { ...baseOpts, scales: baseScales('t (período)', 'k(t) = k̃·A(t)') }
+  });
+}
+
+function drawKagg(Kagg, kstar, n, g, T) {
+  const labels = Array.from({length: T+1}, (_, i) => i);
+  const trend = bgpTrend(kstar, n+g, T, 1, 1, 'Kagg');
+  makeChart('chart-K', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          data: Kagg,
+          borderColor: '#db61a2',
+          borderWidth: 2,
+          pointRadius: 0,
+          tension: 0.2,
+          fill: false
+        },
+        {
+          data: trend,
+          borderColor: 'rgba(219,97,162,0.35)',
+          borderWidth: 1.5,
+          borderDash: [6,4],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: { ...baseOpts, scales: baseScales('t (período)', 'K(t) = k(t)·L(t)') }
+  });
+}
+
+// ── Eq bar ────────────────────────────────────────────────
+function updateEqBar(p) {
+  const kstar = solveKstar(p).toFixed(3);
+  document.getElementById('eq-bar').innerHTML =
+    `<span class="g">k̃*</span> = [s/(δ+n+g)]<sup>1/(1−α)</sup> = <span class="g">${kstar}</span>
+     &nbsp;|&nbsp;
+     <span class="b">k(t)</span> = k̃(t)·A<sub>0</sub>·e<sup>gt</sup>
+     &nbsp;|&nbsp;
+     <span class="p">K(t)</span> = k(t)·L<sub>0</sub>·e<sup>nt</sup>
+     &nbsp;|&nbsp;
+     s=<span class="g">${p.s}</span>, α=<span class="g">${p.alpha}</span>, n=<span class="g">${p.n}</span>, g=<span class="g">${p.g}</span>`;
+}
+
+// ── Chips ─────────────────────────────────────────────────
+function updateChips(p) {
+  const kstar = solveKstar(p);
+  const ystar = Math.pow(kstar, p.alpha);
+  const cstar = (1-p.s)*ystar;
+  document.getElementById('ss-chips').innerHTML = `
+    <div class="chip"><span class="chip-key">k̃*</span><span class="chip-val">${kstar.toFixed(4)}</span></div>
+    <div class="chip"><span class="chip-key">ỹ*</span><span class="chip-val">${ystar.toFixed(4)}</span></div>
+    <div class="chip"><span class="chip-key">c̃*</span><span class="chip-val">${cstar.toFixed(4)}</span></div>
+    <div class="chip"><span class="chip-key">g_LR k̃</span><span class="chip-val">0%</span></div>
+    <div class="chip"><span class="chip-key">g_LR k</span><span class="chip-val">${(p.g*100).toFixed(1)}%</span></div>
+    <div class="chip"><span class="chip-key">g_LR K</span><span class="chip-val">${((p.n+p.g)*100).toFixed(1)}%</span></div>
+  `;
+  // badges
+  document.getElementById('badge-ktilde').textContent = 'g_LR = 0%';
+  document.getElementById('badge-k').textContent = `g_LR = ${(p.g*100).toFixed(1)}%`;
+  document.getElementById('badge-K').textContent = `g_LR = ${((p.n+p.g)*100).toFixed(1)}%`;
+}
+
+// ── Run ───────────────────────────────────────────────────
+function runAll() {
+  const p = params;
+  const kstar = solveKstar(p);
+  const { ktilde, kpc, Kagg } = simulate(p);
+  drawKtilde(ktilde, kstar, p.T);
+  drawKpc(kpc, kstar, p.g, p.T);
+  drawKagg(Kagg, kstar, p.n, p.g, p.T);
+  updateEqBar(p);
+  updateChips(p);
+}
+
+// ── Sliders ───────────────────────────────────────────────
+function wire(id, key, dispId, decimals) {
+  const el = document.getElementById(id);
+  const disp = document.getElementById(dispId);
+  el.addEventListener('input', () => {
+    params[key] = parseFloat(el.value);
+    disp.textContent = parseFloat(el.value).toFixed(decimals);
+    runAll();
+  });
+}
+
+wire('sl-s',     's',     'val-s',     2);
+wire('sl-delta', 'delta', 'val-delta', 3);
+wire('sl-n',     'n',     'val-n',     3);
+wire('sl-g',     'g',     'val-g',     3);
+wire('sl-alpha', 'alpha', 'val-alpha', 2);
+wire('sl-k0',    'k0',    'val-k0',    1);
+wire('sl-T',     'T',     'val-T',     0);
+
+// ── Init ──────────────────────────────────────────────────
+runAll();
+</script>
+</body>
+</html>
